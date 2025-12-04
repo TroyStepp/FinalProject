@@ -1,81 +1,138 @@
 import javax.swing.*;
-import java.util.Scanner;
 
-class Order {
-    String drinkName;
-    double basePrice;
+//imports layout manager
+import java.awt.*;
 
+//imports event listeners like button clicks
+import java.awt.event.*;
 
-    Order(String drinkName, double basePrice) {
-        this.drinkName = drinkName;
-        this.basePrice = basePrice;
-    }
+import java.io.*;
 
-
-    void printBill() {
-        Scanner input = new Scanner(System.in);
-        System.out.print("Are you a café member (Y/N)? ");
-        String member = input.nextLine();
-
-        double discount = 0.0;
-        if (member.equalsIgnoreCase("Y")) {
-            discount = 0.10;
-        }
-
-        double finalPrice = basePrice - (basePrice * discount);
-
-        System.out.println("Drink: " + drinkName);
-        System.out.println("Base Price: $" + basePrice);
-        System.out.println("Discount: " + (discount * 100) + " %");
-        System.out.printf("Final Price: $%.2f\n", finalPrice);
-    }
-}
+//imports ArrayList for storing items
+import java.util.ArrayList;
 
 public class Main {
     public static void main(String[] args) {
-        Scanner input = new Scanner(System.in);
-        JFrame Frame = new JFrame(" Coffee Shop");
-        Frame.setSize(400, 200);
-        Frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        JLabel Label = new JLabel(" Welcome to the coffee shop! Please select an item you would like.");
-        JButton Coffee= new JButton(" Coffee");
-        JButton Latte= new JButton(" Latte");
-        JButton croissant= new JButton(" croissant");
-        JPanel Panel = new JPanel();
-        Panel.add(Coffee);
-        Panel.add(Label);
-        Panel.add(Latte);
-        Panel.add(Label);
-        Panel.add(croissant);
-        Panel.add(Label);
-        Frame.add(Panel);
-        Coffee.addActionListener(e -> Label.setText("One Coffee coming right up!"));
-        Latte.addActionListener(e -> Label.setText("One Latte coming right up!"));
-        croissant.addActionListener(e -> Label.setText("One croissant coming right up!"));
-        Frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        Frame.setVisible(true);
+        new CoffeeShopGUI();
+    }
+}
+//creates class that is a window
+class CoffeeShopGUI extends JFrame {
 
-        int choice = input.nextInt();
+    //displays total price at the bottom
+    private JLabel totalLabel;
 
+    //shows items added
+    private JTextArea orderSummary;
 
-        Order order = null;
+    //stores running price
+    private double total = 0.0;
 
-        switch (choice) {
-            case 1:
-                order = new Order("Coffee", 3.50);
-                break;
-            case 2:
-                order = new Order("Latte", 4.50);
-                break;
-            case 3:
-                order = new Order("Croissant", 5.00);
-                break;
-            default:
-                System.out.println("Invalid choice!");
-                return;
+    //stores items(strings) for saving to the file
+    private ArrayList<String> orderItems = new ArrayList<>();
+
+    public CoffeeShopGUI() {
+        setTitle("Coffee Shop Ordering System");
+        setSize(400, 500);
+
+        //closes program after exiting window
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        //organizes screen into north, south, and center for more organized/user-friendly experience
+        setLayout(new BorderLayout());
+
+        // top buttons
+        JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 10, 10));
+
+        JButton coffeeBtn = new JButton("Coffee - $3.50");
+        JButton latteBtn = new JButton("Latte - $4.50");
+        JButton mochaBtn = new JButton("Croissant - $5.00");
+
+        //adds buttons for your menu options
+        buttonPanel.add(coffeeBtn);
+        buttonPanel.add(latteBtn);
+        buttonPanel.add(mochaBtn);
+
+        // places panels at the top of the window
+        add(buttonPanel, BorderLayout.NORTH);
+
+        //area for order summary
+        orderSummary = new JTextArea();
+        //prevents user from being able to type
+        orderSummary.setEditable(false);
+
+        //area for text and allows user to scroll
+        add(new JScrollPane(orderSummary), BorderLayout.CENTER);
+
+        //creates panel with 3 rows
+        JPanel bottomPanel = new JPanel(new GridLayout(3, 1));
+
+        totalLabel = new JLabel("Total: $0.00");
+        JButton saveBtn = new JButton("Save Order");
+        //button for loading/displaying orders
+        JButton loadBtn = new JButton("Load Order History");
+
+        //adds labels and buttons to the bottom panel
+        bottomPanel.add(totalLabel);
+        bottomPanel.add(saveBtn);
+        bottomPanel.add(loadBtn);
+        //so the button is at the bottom of the window
+        add(bottomPanel, BorderLayout.SOUTH);
+
+        //GUI buttons
+        coffeeBtn.addActionListener(e -> addItem("Coffee", 3.50));
+        latteBtn.addActionListener(e -> addItem("Latte", 4.50));
+        mochaBtn.addActionListener(e -> addItem("Croissant", 5.00));
+
+        saveBtn.addActionListener(e -> saveOrder());
+        loadBtn.addActionListener(e -> loadOrderHistory());
+
+        setVisible(true);
+    }
+//adds items to the order (add order method)
+    private void addItem(String item, double price) {
+        orderItems.add(item + " - $" + price);
+        total += price;
+
+        orderSummary.append(item + " added ($" + price + ")\n");
+        totalLabel.setText(String.format("Total: $%.2f", total));
+    }
+    //saves data so it isn't erased after closing(save order method)
+    private void saveOrder() {
+        //writes the order into the file
+        try (PrintWriter writer = new PrintWriter(new FileWriter("order_history.txt", true))) {
+            writer.println("=== New Order ===");
+            for (String item : orderItems) {
+                writer.println(item);
+            }
+            writer.println("Total: $" + String.format("%.2f", total));
+            //displays the total
+            writer.println();
+            JOptionPane.showMessageDialog(this, "Order saved!");
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Error saving order.");
         }
+    }
+//load order method
+    private void loadOrderHistory() {
+        try {
+            //references the file
+            File file = new File("order_history.txt");
+            if (!file.exists()) {
 
+            }
+            //reads the file line by line
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            orderSummary.setText(""); // clear
+            String line;
 
-        order.printBill();
+            //displays receipt when loading history
+            while ((line = reader.readLine()) != null) {
+                orderSummary.append(line + "\n");
+            }
+
+            reader.close();
+        } catch (IOException e) {
+        }
     }
 }
