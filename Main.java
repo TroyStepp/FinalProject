@@ -56,27 +56,36 @@ class CoffeeShopGUI extends JFrame {
         // places panels at the top of the window
         add(buttonPanel, BorderLayout.NORTH);
 
-        //area for order summary
+
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BorderLayout());
+
+        JLabel welcomeLabel = new JLabel("Welcome to the coffee shop, please select the items you would like :).", SwingConstants.CENTER);
+
+        // (REMOVED FONT LINE TO MATCH REST OF GUI)
+        // welcomeLabel.setFont(new Font("Arial", Font.BOLD, 20));
+
+        centerPanel.add(welcomeLabel, BorderLayout.NORTH);
+
         orderSummary = new JTextArea();
-        //prevents user from being able to type
         orderSummary.setEditable(false);
 
-        //area for text and allows user to scroll
-        add(new JScrollPane(orderSummary), BorderLayout.CENTER);
+        centerPanel.add(new JScrollPane(orderSummary), BorderLayout.CENTER);
+
+        add(centerPanel, BorderLayout.CENTER);
 
         //creates panel with 3 rows
         JPanel bottomPanel = new JPanel(new GridLayout(3, 1));
 
         totalLabel = new JLabel("Total: $0.00");
         JButton saveBtn = new JButton("Save Order");
-        //button for loading/displaying orders
         JButton loadBtn = new JButton("Load Order History");
 
         //adds labels and buttons to the bottom panel
         bottomPanel.add(totalLabel);
         bottomPanel.add(saveBtn);
         bottomPanel.add(loadBtn);
-        //so the button is at the bottom of the window
+
         add(bottomPanel, BorderLayout.SOUTH);
 
         //GUI buttons
@@ -89,7 +98,8 @@ class CoffeeShopGUI extends JFrame {
 
         setVisible(true);
     }
-//adds items to the order (add order method)
+
+    //adds items to the order (add order method)
     private void addItem(String item, double price) {
         orderItems.add(item + " - $" + price);
         total += price;
@@ -97,36 +107,33 @@ class CoffeeShopGUI extends JFrame {
         orderSummary.append(item + " added ($" + price + ")\n");
         totalLabel.setText(String.format("Total: $%.2f", total));
     }
+
     //saves data so it isn't erased after closing(save order method)
     private void saveOrder() {
-        //writes the order into the file
         try (PrintWriter writer = new PrintWriter(new FileWriter("order_history.txt", true))) {
             writer.println("=== New Order ===");
             for (String item : orderItems) {
                 writer.println(item);
             }
             writer.println("Total: $" + String.format("%.2f", total));
-            //displays the total
             writer.println();
             JOptionPane.showMessageDialog(this, "Order saved!");
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Error saving order.");
         }
     }
-//load order method
+
+    //load order method
     private void loadOrderHistory() {
         try {
-            //references the file
             File file = new File("order_history.txt");
             if (!file.exists()) {
-
             }
-            //reads the file line by line
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            orderSummary.setText(""); // clear
-            String line;
 
-            //displays receipt when loading history
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            orderSummary.setText("");
+
+            String line;
             while ((line = reader.readLine()) != null) {
                 orderSummary.append(line + "\n");
             }
